@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: laravel_app
+    ports:
+      - "10025:80"
+    volumes:
+      - ./:/var/www/html             # source code mount
+      - vendor:/var/www/html/vendor  # biar vendor tetap ada
+    depends_on:
+      - db
+      - redis
+      - mailpit
+    networks:
+      - laravel
+    command: >
+      bash -c "
+      if [ ! -d vendor ]; then
+        composer install --prefer-dist --no-dev --optimize-autoloader;
+      fi &&
+      apache2-foreground
+      "
+
+  db:
+    image: postgres:15
+    container_name: laravel_db
+    restart: always
+    environment:
+      POSTGRES_DB: Diet_Gamification
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgree
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - laravel
+
+  redis:
+    image: redis:7
+    container_name: laravel_redis
+    networks:
+      - laravel
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: laravel_mailpit
+    ports:
+      - "10026:8025"
+      - "10027:1025"
+    networks:
+      - laravel
+
+volumes:
+  pgdata:
+  vendor:
+
+networks:
+  laravel:
+    driver: bridge

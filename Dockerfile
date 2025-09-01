@@ -1,34 +1,35 @@
-# Use official PHP image with Apache
-FROM php:8.1-apache
+# Base PHP + Apache
+FROM php:8.2-apache
 
-# Install system dependencies
+# Install dependencies + PHP extensions
 RUN apt-get update && apt-get install -y \
     libpq-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     git \
     unzip \
     zip \
-    && docker-php-ext-install pdo pdo_pgsql pgsql
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install pdo pdo_pgsql pgsql gd bcmath
 
 # Enable Apache rewrite module
 RUN a2enmod rewrite
 
-# Set working directory
+# Set DocumentRoot ke public
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+
 WORKDIR /var/www/html
 
-# Copy composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Copy Composer binary
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy existing application directory contents
-COPY . /var/www/html
+# Copy source code (di dev, ini cuma buat build awal)
+COPY . .
 
-# Install PHP dependencies with composer
-RUN composer install --no-dev --optimize-autoloader
+# Permissions
+RUN chown -R www-data:www-data storage bootstrap/cache \
+ && chmod -R 775 storage bootstrap/cache
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-# Expose port 80
 EXPOSE 80
-
-# Start Apache in foreground
 CMD ["apache2-foreground"]
