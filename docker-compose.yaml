@@ -7,8 +7,8 @@ services:
     ports:
       - "10025:80"
     volumes:
-      - ./:/var/www/html             # source code mount
-      - vendor:/var/www/html/vendor  # biar vendor tetap ada
+      - ./:/var/www/html
+      - food-gamification_vendor:/var/www/html/vendor
     depends_on:
       - db
       - redis
@@ -31,8 +31,10 @@ services:
       POSTGRES_DB: Diet_Gamification
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgree
+    ports:
+      - "1026:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - food-gamification_pgdata:/var/lib/postgresql/data
     networks:
       - laravel
 
@@ -46,14 +48,14 @@ services:
     image: axllent/mailpit:latest
     container_name: laravel_mailpit
     ports:
-      - "10026:8025"
-      - "10027:1025"
+      - "10027:8025"
+      - "10028:1025"
     networks:
       - laravel
 
 volumes:
-  pgdata:
-  vendor:
+  food-gamification_pgdata:
+  food-gamification_vendor:
 
 networks:
   laravel:
